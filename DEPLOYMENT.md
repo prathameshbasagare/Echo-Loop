@@ -34,7 +34,7 @@ git commit -m "Initial commit: Echo Loop game"
 Replace `YOUR_USERNAME` with your GitHub username:
 
 ```bash
-git remote add origin https://github.com/YOUR_USERNAME/echo-loop.git
+git remote add origin https://github.com/prathameshbasagare/echo-loop.git
 git branch -M main
 git push -u origin main
 ```
@@ -59,7 +59,7 @@ git push -u origin main
 
 Your game will be available at:
 ```
-https://YOUR_USERNAME.github.io/echo-loop/
+https://prathameshbasagare.github.io/echo-loop/
 ```
 
 ## How the Workflow Works
