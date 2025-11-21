@@ -15,18 +15,9 @@ export class Player {
     }
 
     public update(dt: number, input: InputState) {
-        // Normalize diagonal movement
-        let moveX = input.dx;
-        let moveY = input.dy;
-
-        if (moveX !== 0 && moveY !== 0) {
-            const length = Math.sqrt(moveX * moveX + moveY * moveY);
-            moveX /= length;
-            moveY /= length;
-        }
-
-        this.x += moveX * this.speed * dt;
-        this.y += moveY * this.speed * dt;
+        // Input now contains actual velocity (vx, vy) not direction
+        this.x += input.vx * dt;
+        this.y += input.vy * dt;
     }
 
     public render(ctx: CanvasRenderingContext2D) {

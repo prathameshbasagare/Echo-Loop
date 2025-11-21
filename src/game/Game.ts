@@ -1,6 +1,6 @@
 import { GameLoop } from '../engine/GameLoop';
 import { Input } from '../engine/Input';
-import { TimeManager, InputState } from './TimeManager';
+import { TimeManager } from './TimeManager';
 import { Player } from './Player';
 import { Level } from './Level';
 import { LEVELS } from './LevelData';
@@ -134,37 +134,51 @@ export class Game {
             this.player.y = this.startY;
         }
 
-        // 2. Get Current Input
-        const inputState: InputState = {
-            dx: this.input.getAxis('ArrowLeft', 'ArrowRight') + this.input.getAxis('KeyA', 'KeyD'),
-            dy: this.input.getAxis('ArrowUp', 'ArrowDown') + this.input.getAxis('KeyW', 'KeyS')
+        // 2. Get Current Input Direction
+        let dx = this.input.getAxis('ArrowLeft', 'ArrowRight') + this.input.getAxis('KeyA', 'KeyD');
+        let dy = this.input.getAxis('ArrowUp', 'ArrowDown') + this.input.getAxis('KeyW', 'KeyS');
+
+        // Normalize diagonal movement
+        if (dx !== 0 && dy !== 0) {
+            const length = Math.sqrt(dx * dx + dy * dy);
+            dx /= length;
+            dy /= length;
+        }
+
+        // Calculate BASE velocity (WITHOUT speedMultiplier)
+        // speedMultiplier will be applied via adjustedDt
+        const baseVelocity = {
+            vx: dx * this.player.speed,
+            vy: dy * this.player.speed
         };
 
-        // 3. Record Input
-        this.timeManager.recordInput(inputState);
+        // 3. Record Base Velocity
+        this.timeManager.recordInput(baseVelocity);
 
         // 4. Update Current Player with Collision
         const oldX = this.player.x;
         const oldY = this.player.y;
 
-        this.player.update(adjustedDt, inputState);
+        this.player.update(adjustedDt, baseVelocity);
 
         if (this.level.checkCollision(this.player.getBounds())) {
             this.player.x = oldX;
             this.player.y = oldY;
         }
 
-        // 5. Update Ghosts
-        const currentFrame = this.timeManager.getFrame();
+        // 5. Update Ghosts (apply current speedMultiplier via adjustedDt)
+        const currentFrame = Math.floor(this.timeManager.getFrame());
         this.timeManager.getPastLoops().forEach(loopIndex => {
             const ghost = this.ghosts.get(loopIndex);
-            const ghostInput = this.timeManager.getGhostInput(loopIndex, currentFrame);
+            const recordedVelocity = this.timeManager.getGhostInput(loopIndex, currentFrame);
 
-            if (ghost && ghostInput) {
+            if (ghost && recordedVelocity) {
                 const gOldX = ghost.x;
                 const gOldY = ghost.y;
 
-                ghost.update(adjustedDt, ghostInput);
+                // Use recorded velocity with current adjustedDt
+                // No need to scale - adjustedDt already has speedMultiplier
+                ghost.update(adjustedDt, recordedVelocity);
 
                 // Ghost Collision with Walls
                 if (this.level.checkCollision(ghost.getBounds())) {
