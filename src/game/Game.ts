@@ -5,6 +5,12 @@ import { Player } from './Player';
 import { Level } from './Level';
 import { LEVELS } from './LevelData';
 
+enum GameState {
+    MENU,
+    PLAYING,
+    PAUSED
+}
+
 export class Game {
     private loop: GameLoop;
     private input: Input;
@@ -19,12 +25,16 @@ export class Game {
     private startX: number = 0;
     private startY: number = 0;
 
+    private state: GameState = GameState.MENU;
+    private pauseKeyWasDown: boolean = false;
+    private menuKeyWasDown: boolean = false;
+
     constructor(canvas: HTMLCanvasElement) {
         this.ctx = canvas.getContext('2d')!;
         this.input = new Input();
         this.timeManager = new TimeManager();
 
-        this.loadLevel(0);
+        // Don't load level yet - wait for user to start from menu
 
         this.loop = new GameLoop(this.update, this.render);
     }
@@ -34,6 +44,7 @@ export class Game {
             alert("You beat all levels! Game Over.");
             this.currentLevelIndex = 0;
             index = 0;
+            this.state = GameState.MENU; // Return to menu on completion
         }
 
         this.currentLevelIndex = index;
@@ -61,7 +72,46 @@ export class Game {
     }
 
     private update = (dt: number) => {
+        // Handle Global Input (Pause/Menu) - Check BEFORE updating input state
+        // This way isKeyPressed works for pause toggle
+        if (this.input.isKeyDown('KeyP') || this.input.isKeyDown('Escape')) {
+            // Use isKeyDown + manual tracking instead of isKeyPressed
+            if (!this.pauseKeyWasDown) {
+                if (this.state === GameState.PLAYING) {
+                    this.state = GameState.PAUSED;
+                } else if (this.state === GameState.PAUSED) {
+                    this.state = GameState.PLAYING;
+                }
+                this.pauseKeyWasDown = true;
+            }
+        } else {
+            this.pauseKeyWasDown = false;
+        }
+
+        // Now update input state for the current frame
         this.input.update();
+
+        if (this.state === GameState.MENU) {
+            if ((this.input.isKeyDown('Enter') || this.input.isKeyDown('Space')) && !this.menuKeyWasDown) {
+                this.state = GameState.PLAYING;
+                this.loadLevel(0); // Start from Level 1
+                this.menuKeyWasDown = true;
+            } else if (!this.input.isKeyDown('Enter') && !this.input.isKeyDown('Space')) {
+                this.menuKeyWasDown = false;
+            }
+            return;
+        }
+
+        if (this.state === GameState.PAUSED) {
+            return;
+        }
+
+        // Apply Speed Multiplier (Fast Forward)
+        let speedMultiplier = 1;
+        if (this.input.isKeyDown('KeyF')) {
+            speedMultiplier = 2;
+        }
+        const adjustedDt = dt * speedMultiplier;
 
         // 1. Handle Time Loop Reset
         if (this.timeManager.update()) {
@@ -86,7 +136,7 @@ export class Game {
         const oldX = this.player.x;
         const oldY = this.player.y;
 
-        this.player.update(dt, inputState);
+        this.player.update(adjustedDt, inputState);
 
         if (this.level.checkCollision(this.player.getBounds())) {
             this.player.x = oldX;
@@ -103,7 +153,7 @@ export class Game {
                 const gOldX = ghost.x;
                 const gOldY = ghost.y;
 
-                ghost.update(dt, ghostInput);
+                ghost.update(adjustedDt, ghostInput);
 
                 // Ghost Collision with Walls
                 if (this.level.checkCollision(ghost.getBounds())) {
@@ -136,12 +186,37 @@ export class Game {
         if (timerEl) timerEl.innerText = this.timeManager.getTimeRemaining().toFixed(1);
 
         const statusEl = document.getElementById('status');
-        if (statusEl) statusEl.innerText = `Level: ${this.currentLevelIndex + 1} | Loop: ${this.timeManager.getLoop()}`;
+        const ffIndicator = this.input.isKeyDown('KeyF') ? ' [FF>>]' : '';
+        if (statusEl) statusEl.innerText = `Level: ${this.currentLevelIndex + 1} | Loop: ${this.timeManager.getLoop()}${ffIndicator}`;
     };
 
     private render = (_alpha: number) => {
         this.ctx.fillStyle = '#333';
         this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+
+        if (this.state === GameState.MENU) {
+            this.ctx.fillStyle = '#fff';
+            this.ctx.font = '40px monospace';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('ECHO LOOP', 400, 200);
+
+            this.ctx.font = '20px monospace';
+            this.ctx.fillText('Press ENTER to Start', 400, 300);
+
+            this.ctx.font = '16px monospace';
+            this.ctx.fillStyle = '#aaa';
+            this.ctx.fillText('Instructions:', 400, 380);
+            this.ctx.fillText('WASD / Arrows to Move', 400, 410);
+            this.ctx.fillText('Cooperate with your past self', 400, 430);
+            this.ctx.fillText('Press P to Pause', 400, 450);
+            this.ctx.fillText('Hold F to Fast Forward', 400, 470);
+            return;
+        }
+
+        // Check if level is initialized
+        if (!this.level || !this.player) {
+            return;
+        }
 
         // Render Level
         this.level.render(this.ctx);
@@ -151,6 +226,16 @@ export class Game {
 
         // Render Player
         this.player.render(this.ctx);
+
+        if (this.state === GameState.PAUSED) {
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+
+            this.ctx.fillStyle = '#fff';
+            this.ctx.font = '40px monospace';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('PAUSED', 400, 300);
+        }
     };
 
     private checkCollision(p1: Player, p2: Player): boolean {

@@ -71,7 +71,7 @@ export const LEVELS: LevelData[] = [
     {
         id: 3,
         name: "The Maze",
-        spawnPoint: { x: 400, y: 300 },
+        spawnPoint: { x: 300, y: 300 },
         walls: [
             { x: 0, y: 0, width: 800, height: 20 },
             { x: 0, y: 580, width: 800, height: 20 },
