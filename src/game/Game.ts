@@ -36,6 +36,9 @@ export class Game {
 
         // Don't load level yet - wait for user to start from menu
 
+        // Add click listener for Start button
+        canvas.addEventListener('click', this.handleCanvasClick);
+
         this.loop = new GameLoop(this.update, this.render);
     }
 
@@ -114,8 +117,16 @@ export class Game {
         const adjustedDt = dt * speedMultiplier;
 
         // 1. Handle Time Loop Reset
-        if (this.timeManager.update()) {
-            // Loop reset!
+        const loopReset = this.timeManager.update(speedMultiplier);
+        if (loopReset) {
+            // Check if we hit the loop limit (3)
+            if (this.timeManager.getLoop() >= 3) {
+                console.log('Loop limit reached! Restarting level...');
+                this.loadLevel(this.currentLevelIndex);
+                return;
+            }
+
+            // Normal loop reset - create ghost
             const finishedLoop = this.timeManager.getLoop() - 1;
             this.ghosts.set(finishedLoop, new Player(this.startX, this.startY, `rgba(255, 255, 255, 0.5)`));
 
@@ -200,16 +211,27 @@ export class Game {
             this.ctx.textAlign = 'center';
             this.ctx.fillText('ECHO LOOP', 400, 200);
 
-            this.ctx.font = '20px monospace';
-            this.ctx.fillText('Press ENTER to Start', 400, 300);
+            // Draw Start Button
+            const buttonX = 300;
+            const buttonY = 280;
+            const buttonWidth = 200;
+            const buttonHeight = 50;
+
+            this.ctx.fillStyle = '#4af';
+            this.ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
+            this.ctx.fillStyle = '#000';
+            this.ctx.font = '24px monospace';
+            this.ctx.fillText('START GAME', 400, 315);
 
             this.ctx.font = '16px monospace';
             this.ctx.fillStyle = '#aaa';
-            this.ctx.fillText('Instructions:', 400, 380);
-            this.ctx.fillText('WASD / Arrows to Move', 400, 410);
-            this.ctx.fillText('Cooperate with your past self', 400, 430);
-            this.ctx.fillText('Press P to Pause', 400, 450);
-            this.ctx.fillText('Hold F to Fast Forward', 400, 470);
+            this.ctx.fillText('Or press ENTER / SPACE', 400, 360);
+            this.ctx.fillText('Instructions:', 400, 410);
+            this.ctx.fillText('WASD / Arrows to Move', 400, 435);
+            this.ctx.fillText('Cooperate with your past self', 400, 455);
+            this.ctx.fillText('Press P to Pause', 400, 475);
+            this.ctx.fillText('Hold F to Fast Forward (2x)', 400, 495);
+            this.ctx.fillText('Max 3 Loops Per Level', 400, 515);
             return;
         }
 
@@ -235,6 +257,26 @@ export class Game {
             this.ctx.font = '40px monospace';
             this.ctx.textAlign = 'center';
             this.ctx.fillText('PAUSED', 400, 300);
+        }
+    };
+
+    private handleCanvasClick = (event: MouseEvent) => {
+        if (this.state !== GameState.MENU) return;
+
+        const rect = (event.target as HTMLCanvasElement).getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+
+        // Check if click is on Start button
+        const buttonX = 300;
+        const buttonY = 280;
+        const buttonWidth = 200;
+        const buttonHeight = 50;
+
+        if (x >= buttonX && x <= buttonX + buttonWidth &&
+            y >= buttonY && y <= buttonY + buttonHeight) {
+            this.state = GameState.PLAYING;
+            this.loadLevel(0);
         }
     };
 

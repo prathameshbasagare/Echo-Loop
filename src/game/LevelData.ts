@@ -71,24 +71,24 @@ export const LEVELS: LevelData[] = [
     {
         id: 3,
         name: "The Maze",
-        spawnPoint: { x: 300, y: 300 },
+        spawnPoint: { x: 100, y: 500 },
         walls: [
             { x: 0, y: 0, width: 800, height: 20 },
             { x: 0, y: 580, width: 800, height: 20 },
             { x: 0, y: 0, width: 20, height: 600 },
             { x: 780, y: 0, width: 20, height: 600 },
-            // Maze walls
-            { x: 200, y: 100, width: 20, height: 400 },
-            { x: 580, y: 100, width: 20, height: 400 },
-            { x: 200, y: 100, width: 400, height: 20 },
-            { x: 200, y: 480, width: 400, height: 20 }
+            // Simple maze - three paths
+            { x: 200, y: 100, width: 20, height: 300 },
+            { x: 400, y: 200, width: 20, height: 380 },
+            { x: 600, y: 20, width: 20, height: 300 }
         ],
         buttons: [
-            { id: 1, x: 100, y: 300, width: 40, height: 40, targetDoorId: 1, color: '#f4f' }
+            { id: 1, x: 50, y: 100, width: 40, height: 40, targetDoorId: 1, color: '#f4f' }
         ],
         doors: [
-            { id: 1, x: 390, y: 120, width: 20, height: 360, color: '#f4f' }
+            { id: 1, x: 600, y: 320, width: 20, height: 260, color: '#f4f' }
         ],
-        goal: { x: 400, y: 200, width: 40, height: 40 }
+        goal: { x: 700, y: 450, width: 50, height: 50 }
     }
 ];
+

@@ -13,9 +13,14 @@ export class TimeManager {
         this.recordings.set(this.currentLoop, []);
     }
 
-    public update(): boolean {
-        this.currentFrame++;
+    public update(speedMultiplier: number = 1): boolean {
+        this.currentFrame += speedMultiplier;
+
         if (this.currentFrame >= this.loopDurationFrames) {
+            // Check if we've hit the loop limit
+            if (this.currentLoop >= 3) {
+                return true; // Signal to restart level
+            }
             this.resetLoop();
             return true; // Loop reset occurred
         }
