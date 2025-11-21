@@ -8,7 +8,8 @@ import { LEVELS } from './LevelData';
 enum GameState {
     MENU,
     PLAYING,
-    PAUSED
+    PAUSED,
+    GAME_COMPLETE
 }
 
 export class Game {
@@ -199,20 +200,37 @@ export class Game {
         this.ghosts.forEach(g => allEntities.push(g.getBounds()));
         this.level.update(allEntities);
 
-        // 7. Check Win Condition
-        if (this.checkCollisionRect(this.player.getBounds(), this.level.getGoal())) {
+        // Check Win Condition
+        const playerBounds = this.player.getBounds();
+        const goalBounds = this.level.getGoal();
+        if (this.checkCollisionRect(playerBounds, goalBounds)) {
             console.log("WIN!");
-            this.loadLevel(this.currentLevelIndex + 1);
-            return;
+
+            // Check if this was the last level
+            if (this.currentLevelIndex >= LEVELS.length - 1) {
+                // All levels completed!
+                this.state = GameState.GAME_COMPLETE;
+            } else {
+                // Load next level
+                this.loadLevel(this.currentLevelIndex + 1);
+                return;
+            }
         }
 
-        // Update UI
+        // Update UI (only during gameplay)
         const timerEl = document.getElementById('timer');
-        if (timerEl) timerEl.innerText = this.timeManager.getTimeRemaining().toFixed(1);
-
         const statusEl = document.getElementById('status');
-        const ffIndicator = this.input.isKeyDown('KeyF') ? ' [FF>>]' : '';
-        if (statusEl) statusEl.innerText = `Level: ${this.currentLevelIndex + 1} | Loop: ${this.timeManager.getLoop()}${ffIndicator}`;
+
+        if (this.state === GameState.GAME_COMPLETE) {
+            // Hide timer and status when game is complete
+            if (timerEl) timerEl.innerText = '';
+            if (statusEl) statusEl.innerText = '';
+        } else if (this.state === GameState.PLAYING) {
+            // Show normal UI during gameplay
+            if (timerEl) timerEl.innerText = this.timeManager.getTimeRemaining().toFixed(1);
+            const ffIndicator = this.input.isKeyDown('KeyF') ? ' [FF>>]' : '';
+            if (statusEl) statusEl.innerText = `Level: ${this.currentLevelIndex + 1} | Loop: ${this.timeManager.getLoop()}${ffIndicator}`;
+        }
     };
 
     private render = (_alpha: number) => {
@@ -249,6 +267,35 @@ export class Game {
             return;
         }
 
+        if (this.state === GameState.GAME_COMPLETE) {
+            this.ctx.fillStyle = '#fff';
+            this.ctx.font = '48px monospace';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('CONGRATULATIONS!', 400, 180);
+
+            this.ctx.font = '24px monospace';
+            this.ctx.fillStyle = '#4f4';
+            this.ctx.fillText('All Levels Completed!', 400, 230);
+
+            this.ctx.font = '20px monospace';
+            this.ctx.fillStyle = '#aaa';
+            this.ctx.fillText('Thank you for playing Echo Loop', 400, 280);
+
+            // Draw Play Again Button
+            const buttonX = 300;
+            const buttonY = 340;
+            const buttonWidth = 200;
+            const buttonHeight = 50;
+
+            this.ctx.fillStyle = '#4af';
+            this.ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
+            this.ctx.fillStyle = '#000';
+            this.ctx.font = '24px monospace';
+            this.ctx.fillText('PLAY AGAIN', 400, 375);
+
+            return;
+        }
+
         // Check if level is initialized
         if (!this.level || !this.player) {
             return;
@@ -275,22 +322,34 @@ export class Game {
     };
 
     private handleCanvasClick = (event: MouseEvent) => {
-        if (this.state !== GameState.MENU) return;
-
         const rect = (event.target as HTMLCanvasElement).getBoundingClientRect();
         const x = event.clientX - rect.left;
         const y = event.clientY - rect.top;
 
-        // Check if click is on Start button
-        const buttonX = 300;
-        const buttonY = 280;
-        const buttonWidth = 200;
-        const buttonHeight = 50;
+        if (this.state === GameState.MENU) {
+            // Check if click is on Start button
+            const buttonX = 300;
+            const buttonY = 280;
+            const buttonWidth = 200;
+            const buttonHeight = 50;
 
-        if (x >= buttonX && x <= buttonX + buttonWidth &&
-            y >= buttonY && y <= buttonY + buttonHeight) {
-            this.state = GameState.PLAYING;
-            this.loadLevel(0);
+            if (x >= buttonX && x <= buttonX + buttonWidth &&
+                y >= buttonY && y <= buttonY + buttonHeight) {
+                this.state = GameState.PLAYING;
+                this.loadLevel(0);
+            }
+        } else if (this.state === GameState.GAME_COMPLETE) {
+            // Check if click is on Play Again button
+            const buttonX = 300;
+            const buttonY = 340;
+            const buttonWidth = 200;
+            const buttonHeight = 50;
+
+            if (x >= buttonX && x <= buttonX + buttonWidth &&
+                y >= buttonY && y <= buttonY + buttonHeight) {
+                // Reload the page to restart
+                window.location.reload();
+            }
         }
     };
 
