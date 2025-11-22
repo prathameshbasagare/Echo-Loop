@@ -182,7 +182,7 @@ export class Game {
         const loopReset = this.timeManager.update(speedMultiplier);
         if (loopReset) {
             // Check if we hit the loop limit for this level
-            if (this.timeManager.getLoop() >= this.level.maxLoops) {
+            if (this.timeManager.getLoop() > this.level.maxLoops) {
                 console.log(`Loop limit reached (${this.level.maxLoops} loops)! Level failed.`);
                 this.state = GameState.LEVEL_FAILED;
                 return;
