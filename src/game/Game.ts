@@ -11,6 +11,7 @@ enum GameState {
     PLAYING,
     PAUSED,
     LEVEL_COMPLETE,
+    LEVEL_FAILED,
     GAME_COMPLETE
 }
 
@@ -32,11 +33,15 @@ export class Game {
     private pauseKeyWasDown: boolean = false;
     private menuKeyWasDown: boolean = false;
     private selectedLevelIndex: number = -1; // -1 means no level selected
+    private completedLevels: Set<number> = new Set(); // Track completed level IDs
 
     constructor(canvas: HTMLCanvasElement) {
         this.ctx = canvas.getContext('2d')!;
         this.input = new Input();
         this.timeManager = new TimeManager();
+
+        // Load progress from localStorage
+        this.loadProgress();
 
         // Don't load level yet - wait for user to start from menu
 
@@ -44,6 +49,45 @@ export class Game {
         canvas.addEventListener('click', this.handleCanvasClick);
 
         this.loop = new GameLoop(this.update, this.render);
+    }
+
+    private loadProgress() {
+        const saved = localStorage.getItem('echoLoopProgress');
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                this.completedLevels = new Set(data.completedLevels || []);
+            } catch (e) {
+                console.error('Failed to load progress:', e);
+            }
+        }
+    }
+
+    private saveProgress() {
+        const data = {
+            completedLevels: Array.from(this.completedLevels)
+        };
+        localStorage.setItem('echoLoopProgress', JSON.stringify(data));
+    }
+
+    private markLevelComplete(levelIndex: number) {
+        const levelId = LEVELS[levelIndex].id;
+        this.completedLevels.add(levelId);
+        this.saveProgress();
+    }
+
+    private isLevelUnlocked(levelIndex: number): boolean {
+        // Level 1 is always unlocked
+        if (levelIndex === 0) return true;
+
+        // Check if previous level is completed
+        const previousLevelId = LEVELS[levelIndex - 1].id;
+        return this.completedLevels.has(previousLevelId);
+    }
+
+    private isLevelCompleted(levelIndex: number): boolean {
+        const levelId = LEVELS[levelIndex].id;
+        return this.completedLevels.has(levelId);
     }
 
     private loadLevel(index: number) {
@@ -118,6 +162,11 @@ export class Game {
             return;
         }
 
+        if (this.state === GameState.LEVEL_FAILED) {
+            // Level failed screen is handled by mouse clicks
+            return;
+        }
+
         if (this.state === GameState.PAUSED) {
             return;
         }
@@ -134,8 +183,8 @@ export class Game {
         if (loopReset) {
             // Check if we hit the loop limit (3)
             if (this.timeManager.getLoop() >= 3) {
-                console.log('Loop limit reached! Restarting level...');
-                this.loadLevel(this.currentLevelIndex);
+                console.log('Loop limit reached! Level failed.');
+                this.state = GameState.LEVEL_FAILED;
                 return;
             }
 
@@ -218,6 +267,9 @@ export class Game {
         if (this.checkCollisionRect(playerBounds, goalBounds)) {
             console.log("WIN!");
 
+            // Mark level as complete
+            this.markLevelComplete(this.currentLevelIndex);
+
             // Check if this was the last level
             if (this.currentLevelIndex >= LEVELS.length - 1) {
                 // All levels completed!
@@ -298,30 +350,63 @@ export class Game {
                 const x = gridStartX + col * (cardWidth + cardSpacing);
                 const y = gridStartY + row * (cardHeight + cardSpacing);
 
-                // Card background
+                const isUnlocked = this.isLevelUnlocked(index);
+                const isCompleted = this.isLevelCompleted(index);
                 const isSelected = this.selectedLevelIndex === index;
-                this.ctx.fillStyle = isSelected ? '#4af' : '#555';
+
+                // Card background
+                if (!isUnlocked) {
+                    this.ctx.fillStyle = '#333'; // Locked - darker
+                } else if (isSelected) {
+                    this.ctx.fillStyle = '#4af'; // Selected - blue
+                } else if (isCompleted) {
+                    this.ctx.fillStyle = '#464'; // Completed - dark green
+                } else {
+                    this.ctx.fillStyle = '#555'; // Available - gray
+                }
                 this.ctx.fillRect(x, y, cardWidth, cardHeight);
 
                 // Card border
-                this.ctx.strokeStyle = isSelected ? '#fff' : '#777';
+                if (isSelected) {
+                    this.ctx.strokeStyle = '#fff';
+                } else if (isCompleted) {
+                    this.ctx.strokeStyle = '#4f4';
+                } else if (isUnlocked) {
+                    this.ctx.strokeStyle = '#777';
+                } else {
+                    this.ctx.strokeStyle = '#444';
+                }
                 this.ctx.lineWidth = 3;
                 this.ctx.strokeRect(x, y, cardWidth, cardHeight);
 
                 // Level number
-                this.ctx.fillStyle = '#fff';
+                this.ctx.fillStyle = isUnlocked ? '#fff' : '#666';
                 this.ctx.font = 'bold 48px monospace';
                 this.ctx.fillText(`${level.id}`, x + cardWidth / 2, y + 60);
 
                 // Level name
                 this.ctx.font = '14px monospace';
-                this.ctx.fillStyle = '#ddd';
+                this.ctx.fillStyle = isUnlocked ? '#ddd' : '#555';
                 this.ctx.fillText(level.name, x + cardWidth / 2, y + 95);
 
-                // Level info
+                // Level info or lock icon
                 this.ctx.font = '11px monospace';
-                this.ctx.fillStyle = '#aaa';
-                this.ctx.fillText(`${level.buttons.length} Button${level.buttons.length !== 1 ? 's' : ''}`, x + cardWidth / 2, y + 120);
+                if (!isUnlocked) {
+                    this.ctx.fillStyle = '#888';
+                    this.ctx.font = '40px monospace';
+                    this.ctx.fillText('🔒', x + cardWidth / 2, y + 125);
+                } else {
+                    this.ctx.fillStyle = '#aaa';
+                    this.ctx.font = '11px monospace';
+                    this.ctx.fillText(`${level.buttons.length} Button${level.buttons.length !== 1 ? 's' : ''}`, x + cardWidth / 2, y + 120);
+                }
+
+                // Completion checkmark
+                if (isCompleted) {
+                    this.ctx.fillStyle = '#4f4';
+                    this.ctx.font = 'bold 24px monospace';
+                    this.ctx.fillText('✓', x + cardWidth - 20, y + 25);
+                }
             });
 
             // Draw Start button if a level is selected
@@ -388,6 +473,47 @@ export class Game {
             const menuY = this.currentLevelIndex < LEVELS.length - 1
                 ? startY + 2 * (buttonHeight + buttonSpacing)
                 : startY + buttonHeight + buttonSpacing;
+            this.ctx.fillStyle = '#48f';
+            this.ctx.fillRect(menuX, menuY, buttonWidth, buttonHeight);
+            this.ctx.fillStyle = '#000';
+            this.ctx.font = '20px monospace';
+            this.ctx.fillText('MAIN MENU', menuX + buttonWidth / 2, menuY + 33);
+
+            return;
+        }
+
+        if (this.state === GameState.LEVEL_FAILED) {
+            this.ctx.fillStyle = '#fff';
+            this.ctx.font = '40px monospace';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('LEVEL FAILED', 400, 150);
+
+            this.ctx.font = '20px monospace';
+            this.ctx.fillStyle = '#f84';
+            this.ctx.fillText('You ran out of loops!', 400, 200);
+
+            this.ctx.font = '16px monospace';
+            this.ctx.fillStyle = '#aaa';
+            this.ctx.fillText(`${LEVELS[this.currentLevelIndex].name}`, 400, 230);
+
+            // Draw buttons
+            const buttonWidth = 200;
+            const buttonHeight = 50;
+            const buttonSpacing = 20;
+            const startY = 300;
+
+            // Retry button
+            const retryX = 300;
+            const retryY = startY;
+            this.ctx.fillStyle = '#f84';
+            this.ctx.fillRect(retryX, retryY, buttonWidth, buttonHeight);
+            this.ctx.fillStyle = '#000';
+            this.ctx.font = '20px monospace';
+            this.ctx.fillText('RETRY', retryX + buttonWidth / 2, retryY + 33);
+
+            // Main Menu button
+            const menuX = 300;
+            const menuY = startY + buttonHeight + buttonSpacing;
             this.ctx.fillStyle = '#48f';
             this.ctx.fillRect(menuX, menuY, buttonWidth, buttonHeight);
             this.ctx.fillStyle = '#000';
@@ -483,12 +609,15 @@ export class Game {
 
                 if (x >= cardX && x <= cardX + cardWidth &&
                     y >= cardY && y <= cardY + cardHeight) {
-                    this.selectedLevelIndex = index;
+                    // Only allow selecting unlocked levels
+                    if (this.isLevelUnlocked(index)) {
+                        this.selectedLevelIndex = index;
+                    }
                 }
             });
 
-            // Check if click is on Start button (only if level is selected)
-            if (this.selectedLevelIndex !== -1) {
+            // Check if click is on Start button (only if level is selected and unlocked)
+            if (this.selectedLevelIndex !== -1 && this.isLevelUnlocked(this.selectedLevelIndex)) {
                 const buttonX = 600;
                 const buttonY = 520;
                 const buttonWidth = 160;
@@ -533,6 +662,30 @@ export class Game {
             const menuY = this.currentLevelIndex < LEVELS.length - 1
                 ? startY + 2 * (buttonHeight + buttonSpacing)
                 : startY + buttonHeight + buttonSpacing;
+            if (x >= menuX && x <= menuX + buttonWidth &&
+                y >= menuY && y <= menuY + buttonHeight) {
+                this.state = GameState.LEVEL_SELECT;
+                this.selectedLevelIndex = -1;
+            }
+        } else if (this.state === GameState.LEVEL_FAILED) {
+            const buttonWidth = 200;
+            const buttonHeight = 50;
+            const buttonSpacing = 20;
+            const startY = 300;
+
+            // Retry button
+            const retryX = 300;
+            const retryY = startY;
+            if (x >= retryX && x <= retryX + buttonWidth &&
+                y >= retryY && y <= retryY + buttonHeight) {
+                this.state = GameState.PLAYING;
+                this.loadLevel(this.currentLevelIndex);
+                return;
+            }
+
+            // Main Menu button
+            const menuX = 300;
+            const menuY = startY + buttonHeight + buttonSpacing;
             if (x >= menuX && x <= menuX + buttonWidth &&
                 y >= menuY && y <= menuY + buttonHeight) {
                 this.state = GameState.LEVEL_SELECT;
