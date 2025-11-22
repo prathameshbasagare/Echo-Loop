@@ -34,6 +34,8 @@ export class Game {
     private menuKeyWasDown: boolean = false;
     private selectedLevelIndex: number = -1; // -1 means no level selected
     private completedLevels: Set<number> = new Set(); // Track completed level IDs
+    private scrollOffset: number = 0;
+    private maxScroll: number = 0;
 
     constructor(canvas: HTMLCanvasElement) {
         this.ctx = canvas.getContext('2d')!;
@@ -47,9 +49,19 @@ export class Game {
 
         // Add click listener for Start button
         canvas.addEventListener('click', this.handleCanvasClick);
+        canvas.addEventListener('wheel', this.handleWheel);
 
         this.loop = new GameLoop(this.update, this.render);
     }
+
+    private handleWheel = (event: WheelEvent) => {
+        if (this.state === GameState.LEVEL_SELECT) {
+            this.scrollOffset += event.deltaY;
+            // Clamp scroll
+            this.scrollOffset = Math.max(0, Math.min(this.scrollOffset, this.maxScroll));
+            event.preventDefault();
+        }
+    };
 
     private loadProgress() {
         const saved = localStorage.getItem('echoLoopProgress');
@@ -332,23 +344,41 @@ export class Game {
         }
 
         if (this.state === GameState.LEVEL_SELECT) {
+            // Draw Header Background
+            this.ctx.fillStyle = '#333';
+            this.ctx.fillRect(0, 0, 800, 100);
+
             this.ctx.fillStyle = '#fff';
             this.ctx.font = '32px monospace';
             this.ctx.textAlign = 'center';
             this.ctx.fillText('SELECT LEVEL', 400, 60);
 
-            // Draw level grid (3 levels in a row)
-            const gridStartX = 150;
+            // Calculate Grid Dimensions
+            const gridStartX = 90; // Centered: (800 - (3*180 + 2*40)) / 2 = 90
             const gridStartY = 120;
             const cardWidth = 180;
             const cardHeight = 140;
             const cardSpacing = 40;
 
+            const rows = Math.ceil(LEVELS.length / 3);
+            const totalGridHeight = rows * (cardHeight + cardSpacing);
+            const visibleHeight = 400; // 600 - 100 (header) - 100 (footer)
+            this.maxScroll = Math.max(0, totalGridHeight - visibleHeight + 40); // +40 for padding
+
+            // Save context for clipping
+            this.ctx.save();
+            this.ctx.beginPath();
+            this.ctx.rect(0, 100, 800, 400); // Clip area between header and footer
+            this.ctx.clip();
+
             LEVELS.forEach((level, index) => {
                 const col = index % 3;
                 const row = Math.floor(index / 3);
                 const x = gridStartX + col * (cardWidth + cardSpacing);
-                const y = gridStartY + row * (cardHeight + cardSpacing);
+                const y = gridStartY + row * (cardHeight + cardSpacing) - this.scrollOffset;
+
+                // Optimization: Don't draw if out of view
+                if (y + cardHeight < 100 || y > 500) return;
 
                 const isUnlocked = this.isLevelUnlocked(index);
                 const isCompleted = this.isLevelCompleted(index);
@@ -409,25 +439,40 @@ export class Game {
                 }
             });
 
-            // Draw Start button if a level is selected
-            if (this.selectedLevelIndex !== -1) {
-                const buttonX = 600;
-                const buttonY = 520;
-                const buttonWidth = 160;
-                const buttonHeight = 50;
+            this.ctx.restore(); // Restore clipping
 
-                this.ctx.fillStyle = '#4f4';
-                this.ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
-                this.ctx.fillStyle = '#000';
-                this.ctx.font = 'bold 20px monospace';
-                this.ctx.fillText('START', buttonX + buttonWidth / 2, buttonY + 33);
-            }
+            // Draw Bottom Overlay
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+            this.ctx.fillRect(0, 500, 800, 100);
 
             // Instructions
             this.ctx.font = '14px monospace';
             this.ctx.fillStyle = '#aaa';
             this.ctx.textAlign = 'center';
-            this.ctx.fillText('Click on a level to select, then click START', 400, 500);
+            this.ctx.fillText('Click on a level to select...', 400, 525);
+
+            // Draw Start button if a level is selected
+            if (this.selectedLevelIndex !== -1) {
+                const buttonX = 300; // Centered button
+                const buttonY = 540;
+                const buttonWidth = 200;
+                const buttonHeight = 40;
+
+                // Only show start button if level is unlocked
+                if (this.isLevelUnlocked(this.selectedLevelIndex)) {
+                    this.ctx.fillStyle = '#4f4';
+                    this.ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
+                    this.ctx.fillStyle = '#000';
+                    this.ctx.font = 'bold 20px monospace';
+                    this.ctx.fillText('START', buttonX + buttonWidth / 2, buttonY + 28);
+                } else {
+                    this.ctx.fillStyle = '#555';
+                    this.ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
+                    this.ctx.fillStyle = '#888';
+                    this.ctx.font = 'bold 20px monospace';
+                    this.ctx.fillText('LOCKED', buttonX + buttonWidth / 2, buttonY + 28);
+                }
+            }
 
             return;
         }
@@ -595,39 +640,47 @@ export class Game {
             }
         } else if (this.state === GameState.LEVEL_SELECT) {
             // Check if click is on a level card
-            const gridStartX = 150;
+            const gridStartX = 90;
             const gridStartY = 120;
             const cardWidth = 180;
             const cardHeight = 140;
             const cardSpacing = 40;
 
-            LEVELS.forEach((_level, index) => {
-                const col = index % 3;
-                const row = Math.floor(index / 3);
-                const cardX = gridStartX + col * (cardWidth + cardSpacing);
-                const cardY = gridStartY + row * (cardHeight + cardSpacing);
-
-                if (x >= cardX && x <= cardX + cardWidth &&
-                    y >= cardY && y <= cardY + cardHeight) {
-                    // Only allow selecting unlocked levels
-                    if (this.isLevelUnlocked(index)) {
-                        this.selectedLevelIndex = index;
-                    }
-                }
-            });
-
-            // Check if click is on Start button (only if level is selected and unlocked)
-            if (this.selectedLevelIndex !== -1 && this.isLevelUnlocked(this.selectedLevelIndex)) {
-                const buttonX = 600;
-                const buttonY = 520;
-                const buttonWidth = 160;
-                const buttonHeight = 50;
+            // Check Start Button Click (Fixed position in footer)
+            if (this.selectedLevelIndex !== -1) {
+                const buttonX = 300;
+                const buttonY = 540;
+                const buttonWidth = 200;
+                const buttonHeight = 40;
 
                 if (x >= buttonX && x <= buttonX + buttonWidth &&
                     y >= buttonY && y <= buttonY + buttonHeight) {
-                    this.state = GameState.PLAYING;
-                    this.loadLevel(this.selectedLevelIndex);
+
+                    if (this.isLevelUnlocked(this.selectedLevelIndex)) {
+                        this.state = GameState.PLAYING;
+                        this.loadLevel(this.selectedLevelIndex);
+                    }
+                    return; // Handled click
                 }
+            }
+
+            // Check Level Card Clicks (Scrolled position)
+            // Only check if click is within the scrollable area (100-500)
+            if (y >= 100 && y <= 500) {
+                LEVELS.forEach((_level, index) => {
+                    const col = index % 3;
+                    const row = Math.floor(index / 3);
+                    const cardX = gridStartX + col * (cardWidth + cardSpacing);
+                    const cardY = gridStartY + row * (cardHeight + cardSpacing) - this.scrollOffset;
+
+                    if (x >= cardX && x <= cardX + cardWidth &&
+                        y >= cardY && y <= cardY + cardHeight) {
+                        // Only allow selecting unlocked levels
+                        if (this.isLevelUnlocked(index)) {
+                            this.selectedLevelIndex = index;
+                        }
+                    }
+                });
             }
         } else if (this.state === GameState.LEVEL_COMPLETE) {
             const buttonWidth = 200;

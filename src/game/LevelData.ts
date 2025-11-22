@@ -283,6 +283,158 @@ export const LEVELS: LevelData[] = [
             { id: 4, x: 550, y: 460, width: 100, height: 20, color: '#ff4' }
         ],
         goal: { x: 720, y: 280, width: 50, height: 50 }
+    },
+    {
+        id: 10,
+        name: "The Grid",
+        maxLoops: 3,
+        spawnPoint: { x: 50, y: 50 },
+        walls: [
+            { x: 0, y: 0, width: 800, height: 20 },
+            { x: 0, y: 580, width: 800, height: 20 },
+            { x: 0, y: 0, width: 20, height: 600 },
+            { x: 780, y: 0, width: 20, height: 600 },
+            { x: 200, y: 0, width: 20, height: 600 },
+            { x: 400, y: 0, width: 20, height: 600 },
+            { x: 600, y: 0, width: 20, height: 600 },
+            { x: 0, y: 200, width: 800, height: 20 },
+            { x: 0, y: 400, width: 800, height: 20 }
+        ],
+        buttons: [
+            { id: 1, x: 100, y: 500, width: 40, height: 40, targetDoorId: 1, color: '#4f4' }
+        ],
+        doors: [
+            { id: 1, x: 600, y: 500, width: 20, height: 100, color: '#f44' }
+        ],
+        goal: { x: 700, y: 500, width: 50, height: 50 }
+    },
+    {
+        id: 11,
+        name: "Spiral",
+        maxLoops: 4,
+        spawnPoint: { x: 400, y: 300 },
+        walls: [
+            { x: 0, y: 0, width: 800, height: 20 },
+            { x: 0, y: 580, width: 800, height: 20 },
+            { x: 0, y: 0, width: 20, height: 600 },
+            { x: 780, y: 0, width: 20, height: 600 },
+            { x: 100, y: 100, width: 600, height: 20 },
+            { x: 100, y: 100, width: 20, height: 400 },
+            { x: 100, y: 500, width: 600, height: 20 },
+            { x: 700, y: 200, width: 20, height: 320 },
+            { x: 200, y: 200, width: 500, height: 20 },
+            { x: 200, y: 200, width: 20, height: 200 },
+            { x: 200, y: 400, width: 400, height: 20 }
+        ],
+        buttons: [
+            { id: 1, x: 50, y: 50, width: 40, height: 40, targetDoorId: 1, color: '#4f4' }
+        ],
+        doors: [
+            { id: 1, x: 350, y: 220, width: 100, height: 20, color: '#f44' }
+        ],
+        goal: { x: 380, y: 250, width: 40, height: 40 }
+    },
+    {
+        id: 12,
+        name: "Two Sides",
+        maxLoops: 2,
+        spawnPoint: { x: 100, y: 300 },
+        walls: [
+            { x: 0, y: 0, width: 800, height: 20 },
+            { x: 0, y: 580, width: 800, height: 20 },
+            { x: 0, y: 0, width: 20, height: 600 },
+            { x: 780, y: 0, width: 20, height: 600 },
+            { x: 390, y: 0, width: 20, height: 600 }
+        ],
+        buttons: [
+            { id: 1, x: 50, y: 50, width: 40, height: 40, targetDoorId: 1, color: '#4f4' },
+            { id: 2, x: 700, y: 500, width: 40, height: 40, targetDoorId: 2, color: '#44f' }
+        ],
+        doors: [
+            { id: 1, x: 390, y: 100, width: 20, height: 100, color: '#f44' },
+            { id: 2, x: 390, y: 400, width: 20, height: 100, color: '#44f' }
+        ],
+        goal: { x: 700, y: 300, width: 50, height: 50 }
+    },
+    {
+        id: 13,
+        name: "The Bridge",
+        maxLoops: 3,
+        spawnPoint: { x: 50, y: 300 },
+        walls: [
+            { x: 0, y: 0, width: 800, height: 20 },
+            { x: 0, y: 580, width: 800, height: 20 },
+            { x: 0, y: 0, width: 20, height: 600 },
+            { x: 780, y: 0, width: 20, height: 600 },
+            { x: 200, y: 0, width: 20, height: 250 },
+            { x: 200, y: 350, width: 20, height: 250 },
+            { x: 500, y: 0, width: 20, height: 250 },
+            { x: 500, y: 350, width: 20, height: 250 }
+        ],
+        buttons: [
+            { id: 1, x: 100, y: 100, width: 40, height: 40, targetDoorId: 1, color: '#4f4' },
+            { id: 2, x: 350, y: 500, width: 40, height: 40, targetDoorId: 2, color: '#44f' }
+        ],
+        doors: [
+            { id: 1, x: 200, y: 250, width: 20, height: 100, color: '#f44' },
+            { id: 2, x: 500, y: 250, width: 20, height: 100, color: '#44f' }
+        ],
+        goal: { x: 700, y: 300, width: 50, height: 50 }
+    },
+    {
+        id: 14,
+        name: "Cornered",
+        maxLoops: 2,
+        spawnPoint: { x: 400, y: 300 },
+        walls: [
+            { x: 0, y: 0, width: 800, height: 20 },
+            { x: 0, y: 580, width: 800, height: 20 },
+            { x: 0, y: 0, width: 20, height: 600 },
+            { x: 780, y: 0, width: 20, height: 600 },
+            { x: 0, y: 0, width: 200, height: 200 },
+            { x: 600, y: 0, width: 200, height: 200 },
+            { x: 0, y: 400, width: 200, height: 200 },
+            { x: 600, y: 400, width: 200, height: 200 }
+        ],
+        buttons: [
+            { id: 1, x: 380, y: 50, width: 40, height: 40, targetDoorId: 1, color: '#4f4' }
+        ],
+        doors: [
+            { id: 1, x: 350, y: 500, width: 100, height: 20, color: '#f44' }
+        ],
+        goal: { x: 400, y: 550, width: 50, height: 30 }
+    },
+    {
+        id: 15,
+        name: "Grand Finale",
+        maxLoops: 5,
+        spawnPoint: { x: 50, y: 50 },
+        walls: [
+            { x: 0, y: 0, width: 800, height: 20 },
+            { x: 0, y: 580, width: 800, height: 20 },
+            { x: 0, y: 0, width: 20, height: 600 },
+            { x: 780, y: 0, width: 20, height: 600 },
+            { x: 100, y: 100, width: 20, height: 400 },
+            { x: 200, y: 100, width: 20, height: 400 },
+            { x: 300, y: 100, width: 20, height: 400 },
+            { x: 400, y: 100, width: 20, height: 400 },
+            { x: 500, y: 100, width: 20, height: 400 },
+            { x: 600, y: 100, width: 20, height: 400 }
+        ],
+        buttons: [
+            { id: 1, x: 50, y: 500, width: 40, height: 40, targetDoorId: 1, color: '#4f4' },
+            { id: 2, x: 150, y: 50, width: 40, height: 40, targetDoorId: 2, color: '#44f' },
+            { id: 3, x: 250, y: 500, width: 40, height: 40, targetDoorId: 3, color: '#f4f' },
+            { id: 4, x: 350, y: 50, width: 40, height: 40, targetDoorId: 4, color: '#ff4' },
+            { id: 5, x: 450, y: 500, width: 40, height: 40, targetDoorId: 5, color: '#0ff' }
+        ],
+        doors: [
+            { id: 1, x: 100, y: 250, width: 20, height: 100, color: '#f44' },
+            { id: 2, x: 200, y: 250, width: 20, height: 100, color: '#44f' },
+            { id: 3, x: 300, y: 250, width: 20, height: 100, color: '#f4f' },
+            { id: 4, x: 400, y: 250, width: 20, height: 100, color: '#ff4' },
+            { id: 5, x: 500, y: 250, width: 20, height: 100, color: '#0ff' }
+        ],
+        goal: { x: 700, y: 300, width: 50, height: 50 }
     }
 ];
-
