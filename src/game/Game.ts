@@ -181,9 +181,9 @@ export class Game {
         // 1. Handle Time Loop Reset
         const loopReset = this.timeManager.update(speedMultiplier);
         if (loopReset) {
-            // Check if we hit the loop limit (3)
-            if (this.timeManager.getLoop() >= 3) {
-                console.log('Loop limit reached! Level failed.');
+            // Check if we hit the loop limit for this level
+            if (this.timeManager.getLoop() >= this.level.maxLoops) {
+                console.log(`Loop limit reached (${this.level.maxLoops} loops)! Level failed.`);
                 this.state = GameState.LEVEL_FAILED;
                 return;
             }
@@ -293,7 +293,7 @@ export class Game {
             // Show normal UI during gameplay
             if (timerEl) timerEl.innerText = this.timeManager.getTimeRemaining().toFixed(1);
             const ffIndicator = this.input.isKeyDown('KeyF') ? ' [FF>>]' : '';
-            if (statusEl) statusEl.innerText = `Level: ${this.currentLevelIndex + 1} | Loop: ${this.timeManager.getLoop()}${ffIndicator}`;
+            if (statusEl) statusEl.innerText = `Level: ${this.currentLevelIndex + 1} | Loop: ${this.timeManager.getLoop()}/${this.level.maxLoops}${ffIndicator}`;
         }
     };
 
@@ -327,7 +327,7 @@ export class Game {
             this.ctx.fillText('Cooperate with your past self', 400, 455);
             this.ctx.fillText('Press P to Pause', 400, 475);
             this.ctx.fillText('Hold F to Fast Forward (2x)', 400, 495);
-            this.ctx.fillText('Max 3 Loops Per Level', 400, 515);
+            this.ctx.fillText('Each level has a loop limit', 400, 515);
             return;
         }
 

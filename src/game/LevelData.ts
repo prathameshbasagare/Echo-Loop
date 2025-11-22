@@ -14,6 +14,7 @@ export interface DoorData extends Rect {
 export interface LevelData {
     id: number;
     name: string;
+    maxLoops: number; // Maximum number of loops allowed for this level
     spawnPoint: { x: number, y: number };
     walls: Rect[];
     buttons: ButtonData[];
@@ -25,6 +26,7 @@ export const LEVELS: LevelData[] = [
     {
         id: 1,
         name: "The Loop Begins",
+        maxLoops: 2,
         spawnPoint: { x: 100, y: 300 },
         walls: [
             { x: 0, y: 0, width: 800, height: 20 },
@@ -45,6 +47,7 @@ export const LEVELS: LevelData[] = [
     {
         id: 2,
         name: "Double Trouble",
+        maxLoops: 2,
         spawnPoint: { x: 50, y: 50 },
         walls: [
             { x: 0, y: 0, width: 800, height: 20 },
@@ -71,6 +74,7 @@ export const LEVELS: LevelData[] = [
     {
         id: 3,
         name: "The Maze",
+        maxLoops: 2,
         spawnPoint: { x: 100, y: 500 },
         walls: [
             { x: 0, y: 0, width: 800, height: 20 },
@@ -93,6 +97,7 @@ export const LEVELS: LevelData[] = [
     {
         id: 4,
         name: "Timing is Key",
+        maxLoops: 3,
         spawnPoint: { x: 50, y: 300 },
         walls: [
             { x: 0, y: 0, width: 800, height: 20 },
@@ -120,6 +125,7 @@ export const LEVELS: LevelData[] = [
     {
         id: 5,
         name: "Triple Threat",
+        maxLoops: 3,
         spawnPoint: { x: 100, y: 500 },
         walls: [
             { x: 0, y: 0, width: 800, height: 20 },
@@ -148,6 +154,7 @@ export const LEVELS: LevelData[] = [
     {
         id: 6,
         name: "Narrow Escape",
+        maxLoops: 3,
         spawnPoint: { x: 50, y: 50 },
         walls: [
             { x: 0, y: 0, width: 800, height: 20 },
@@ -178,6 +185,7 @@ export const LEVELS: LevelData[] = [
     {
         id: 7,
         name: "Precision Timing",
+        maxLoops: 3,
         spawnPoint: { x: 100, y: 100 },
         walls: [
             { x: 0, y: 0, width: 800, height: 20 },
@@ -208,6 +216,7 @@ export const LEVELS: LevelData[] = [
     {
         id: 8,
         name: "The Labyrinth",
+        maxLoops: 3,
         spawnPoint: { x: 50, y: 550 },
         walls: [
             { x: 0, y: 0, width: 800, height: 20 },
@@ -243,6 +252,7 @@ export const LEVELS: LevelData[] = [
     {
         id: 9,
         name: "Final Gauntlet",
+        maxLoops: 4,
         spawnPoint: { x: 50, y: 300 },
         walls: [
             { x: 0, y: 0, width: 800, height: 20 },
