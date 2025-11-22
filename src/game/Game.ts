@@ -204,6 +204,12 @@ export class Game {
             const finishedLoop = this.timeManager.getLoop() - 1;
             this.ghosts.set(finishedLoop, new Player(this.startX, this.startY, `rgba(255, 255, 255, 0.5)`));
 
+            // Reset ALL ghosts to start position so they don't drift
+            this.ghosts.forEach(ghost => {
+                ghost.x = this.startX;
+                ghost.y = this.startY;
+            });
+
             this.player.x = this.startX;
             this.player.y = this.startY;
         }
