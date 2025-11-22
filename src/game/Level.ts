@@ -26,12 +26,16 @@ export class Level {
     private doors: Door[] = [];
     private goal: Rect;
     public spawnPoint: { x: number, y: number };
+    public spawnPoints?: { x: number, y: number }[]; // Optional: Specific spawn points for each loop
     public maxLoops: number; // Maximum loops allowed for this level
 
     constructor(data: LevelData) {
         this.walls = [...data.walls];
         this.goal = { ...data.goal };
         this.spawnPoint = { ...data.spawnPoint };
+        if (data.spawnPoints) {
+            this.spawnPoints = [...data.spawnPoints];
+        }
         this.maxLoops = data.maxLoops;
 
         this.buttons = data.buttons.map(b => ({

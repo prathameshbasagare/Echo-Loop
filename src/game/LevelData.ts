@@ -16,6 +16,7 @@ export interface LevelData {
     name: string;
     maxLoops: number; // Maximum number of loops allowed for this level
     spawnPoint: { x: number, y: number };
+    spawnPoints?: { x: number, y: number }[]; // Optional: Specific spawn points for each loop (index 0 = Loop 1)
     walls: Rect[];
     buttons: ButtonData[];
     doors: DoorData[];
@@ -99,6 +100,11 @@ export const LEVELS: LevelData[] = [
         name: "Timing is Key",
         maxLoops: 3,
         spawnPoint: { x: 50, y: 300 },
+        spawnPoints: [
+            { x: 50, y: 300 },   // Loop 1: Left
+            { x: 350, y: 300 },  // Loop 2: Middle
+            { x: 650, y: 300 }   // Loop 3: Right
+        ],
         walls: [
             { x: 0, y: 0, width: 800, height: 20 },
             { x: 0, y: 580, width: 800, height: 20 },
@@ -127,6 +133,11 @@ export const LEVELS: LevelData[] = [
         name: "Triple Threat",
         maxLoops: 3,
         spawnPoint: { x: 100, y: 500 },
+        spawnPoints: [
+            { x: 50, y: 100 },   // Loop 1: Left Top
+            { x: 350, y: 100 },  // Loop 2: Middle Top
+            { x: 650, y: 500 }   // Loop 3: Right Bottom
+        ],
         walls: [
             { x: 0, y: 0, width: 800, height: 20 },
             { x: 0, y: 580, width: 800, height: 20 },
@@ -156,6 +167,11 @@ export const LEVELS: LevelData[] = [
         name: "Narrow Escape",
         maxLoops: 3,
         spawnPoint: { x: 50, y: 50 },
+        spawnPoints: [
+            { x: 50, y: 50 },    // Loop 1: Top Left
+            { x: 400, y: 50 },   // Loop 2: Top Middle
+            { x: 50, y: 500 }    // Loop 3: Bottom Left
+        ],
         walls: [
             { x: 0, y: 0, width: 800, height: 20 },
             { x: 0, y: 580, width: 800, height: 20 },

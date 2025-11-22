@@ -102,6 +102,13 @@ export class Game {
         return this.completedLevels.has(levelId);
     }
 
+    private getSpawnPoint(loopIndex: number): { x: number, y: number } {
+        if (this.level.spawnPoints && this.level.spawnPoints.length >= loopIndex) {
+            return this.level.spawnPoints[loopIndex - 1];
+        }
+        return this.level.spawnPoint;
+    }
+
     private loadLevel(index: number) {
         if (index >= LEVELS.length) {
             alert("You beat all levels! Game Over.");
@@ -114,8 +121,10 @@ export class Game {
         const data = LEVELS[index];
         this.level = new Level(data);
 
-        this.startX = data.spawnPoint.x;
-        this.startY = data.spawnPoint.y;
+        // Set initial spawn point for Loop 1
+        const spawn = this.getSpawnPoint(1);
+        this.startX = spawn.x;
+        this.startY = spawn.y;
 
         this.player = new Player(this.startX, this.startY, '#4af');
         this.ghosts.clear();
@@ -202,16 +211,27 @@ export class Game {
 
             // Normal loop reset - create ghost
             const finishedLoop = this.timeManager.getLoop() - 1;
-            this.ghosts.set(finishedLoop, new Player(this.startX, this.startY, `rgba(255, 255, 255, 0.5)`));
 
-            // Reset ALL ghosts to start position so they don't drift
-            this.ghosts.forEach(ghost => {
-                ghost.x = this.startX;
-                ghost.y = this.startY;
+            // Get spawn point for the finished loop to place the ghost correctly
+            const ghostSpawn = this.getSpawnPoint(finishedLoop);
+            this.ghosts.set(finishedLoop, new Player(ghostSpawn.x, ghostSpawn.y, `rgba(255, 255, 255, 0.5)`));
+
+            // Reset ALL ghosts to their specific start positions
+            this.ghosts.forEach((ghost, loopIndex) => {
+                const spawn = this.getSpawnPoint(loopIndex);
+                ghost.x = spawn.x;
+                ghost.y = spawn.y;
             });
 
-            this.player.x = this.startX;
-            this.player.y = this.startY;
+            // Set player to spawn point for the NEW loop
+            const currentLoop = this.timeManager.getLoop();
+            const playerSpawn = this.getSpawnPoint(currentLoop);
+            this.player.x = playerSpawn.x;
+            this.player.y = playerSpawn.y;
+
+            // Update startX/startY for reference (though less critical now with dynamic spawns)
+            this.startX = playerSpawn.x;
+            this.startY = playerSpawn.y;
         }
 
         // 2. Get Current Input Direction
@@ -767,14 +787,29 @@ export class Game {
     };
 
     private checkCollision(p1: Player, p2: Player): boolean {
-        // Safe Zone Check: If either player is near spawn, no paradox
-        if (this.isSafe(p1) || this.isSafe(p2)) return false;
+        // Safe Zone Check: If either player is near THEIR spawn, no paradox
+        // We need to know which loop p1 and p2 belong to.
+        // p1 is always the current player (this.player)
+        // p2 is a ghost. We need to find its loop index.
+
+        let p2Loop = -1;
+        for (const [loop, ghost] of this.ghosts.entries()) {
+            if (ghost === p2) {
+                p2Loop = loop;
+                break;
+            }
+        }
+
+        const currentLoop = this.timeManager.getLoop();
+
+        if (this.isSafe(p1, currentLoop) || (p2Loop !== -1 && this.isSafe(p2, p2Loop))) return false;
 
         return this.checkCollisionRect(p1.getBounds(), p2.getBounds());
     }
 
-    private isSafe(p: Player): boolean {
-        const dist = Math.sqrt(Math.pow(p.x - this.startX, 2) + Math.pow(p.y - this.startY, 2));
+    private isSafe(p: Player, loopIndex: number): boolean {
+        const spawn = this.getSpawnPoint(loopIndex);
+        const dist = Math.sqrt(Math.pow(p.x - spawn.x, 2) + Math.pow(p.y - spawn.y, 2));
         return dist < 60; // 60px radius safe zone
     }
 
