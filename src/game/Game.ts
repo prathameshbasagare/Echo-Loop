@@ -3,7 +3,7 @@ import { Input } from '../engine/Input';
 import { TimeManager } from './TimeManager';
 import { Player } from './Player';
 import { Level } from './Level';
-import { LEVELS } from './LevelData';
+import { levelService } from '../services/LevelService';
 
 enum GameState {
     MENU,
@@ -83,7 +83,8 @@ export class Game {
     }
 
     private markLevelComplete(levelIndex: number) {
-        const levelId = LEVELS[levelIndex].id;
+        const levels = levelService.getLevels();
+        const levelId = levels[levelIndex].id;
         this.completedLevels.add(levelId);
         this.saveProgress();
     }
@@ -93,12 +94,14 @@ export class Game {
         if (levelIndex === 0) return true;
 
         // Check if previous level is completed
-        const previousLevelId = LEVELS[levelIndex - 1].id;
+        const levels = levelService.getLevels();
+        const previousLevelId = levels[levelIndex - 1].id;
         return this.completedLevels.has(previousLevelId);
     }
 
     private isLevelCompleted(levelIndex: number): boolean {
-        const levelId = LEVELS[levelIndex].id;
+        const levels = levelService.getLevels();
+        const levelId = levels[levelIndex].id;
         return this.completedLevels.has(levelId);
     }
 
@@ -110,7 +113,8 @@ export class Game {
     }
 
     private loadLevel(index: number) {
-        if (index >= LEVELS.length) {
+        const levels = levelService.getLevels();
+        if (index >= levels.length) {
             alert("You beat all levels! Game Over.");
             this.currentLevelIndex = 0;
             index = 0;
@@ -118,7 +122,7 @@ export class Game {
         }
 
         this.currentLevelIndex = index;
-        const data = LEVELS[index];
+        const data = levels[index];
         this.level = new Level(data);
 
         // Set initial spawn point for Loop 1
@@ -309,7 +313,8 @@ export class Game {
             this.markLevelComplete(this.currentLevelIndex);
 
             // Check if this was the last level
-            if (this.currentLevelIndex >= LEVELS.length - 1) {
+            const levels = levelService.getLevels();
+            if (this.currentLevelIndex >= levels.length - 1) {
                 // All levels completed!
                 this.state = GameState.GAME_COMPLETE;
             } else {
@@ -386,7 +391,8 @@ export class Game {
             const cardHeight = 140;
             const cardSpacing = 40;
 
-            const rows = Math.ceil(LEVELS.length / 3);
+            const levels = levelService.getLevels();
+            const rows = Math.ceil(levels.length / 3);
             const totalGridHeight = rows * (cardHeight + cardSpacing);
             const visibleHeight = 400; // 600 - 100 (header) - 100 (footer)
             this.maxScroll = Math.max(0, totalGridHeight - visibleHeight + 40); // +40 for padding
@@ -397,7 +403,7 @@ export class Game {
             this.ctx.rect(0, 100, 800, 400); // Clip area between header and footer
             this.ctx.clip();
 
-            LEVELS.forEach((level, index) => {
+            levels.forEach((level, index) => {
                 const col = index % 3;
                 const row = Math.floor(index / 3);
                 const x = gridStartX + col * (cardWidth + cardSpacing);
@@ -511,7 +517,8 @@ export class Game {
 
             this.ctx.font = '24px monospace';
             this.ctx.fillStyle = '#4f4';
-            this.ctx.fillText(`${LEVELS[this.currentLevelIndex].name}`, 400, 200);
+            const levels = levelService.getLevels();
+            this.ctx.fillText(`${levels[this.currentLevelIndex].name}`, 400, 200);
 
             // Draw buttons
             const buttonWidth = 200;
@@ -529,7 +536,7 @@ export class Game {
             this.ctx.fillText('RETRY', retryX + buttonWidth / 2, retryY + 33);
 
             // Next Level button (if not last level)
-            if (this.currentLevelIndex < LEVELS.length - 1) {
+            if (this.currentLevelIndex < levels.length - 1) {
                 const nextX = 300;
                 const nextY = startY + buttonHeight + buttonSpacing;
                 this.ctx.fillStyle = '#4f4';
@@ -541,7 +548,7 @@ export class Game {
 
             // Main Menu button
             const menuX = 300;
-            const menuY = this.currentLevelIndex < LEVELS.length - 1
+            const menuY = this.currentLevelIndex < levels.length - 1
                 ? startY + 2 * (buttonHeight + buttonSpacing)
                 : startY + buttonHeight + buttonSpacing;
             this.ctx.fillStyle = '#48f';
@@ -565,7 +572,8 @@ export class Game {
 
             this.ctx.font = '16px monospace';
             this.ctx.fillStyle = '#aaa';
-            this.ctx.fillText(`${LEVELS[this.currentLevelIndex].name}`, 400, 230);
+            const levels = levelService.getLevels();
+            this.ctx.fillText(`${levels[this.currentLevelIndex].name}`, 400, 230);
 
             // Draw buttons
             const buttonWidth = 200;
@@ -693,7 +701,8 @@ export class Game {
             // Check Level Card Clicks (Scrolled position)
             // Only check if click is within the scrollable area (100-500)
             if (y >= 100 && y <= 500) {
-                LEVELS.forEach((_level, index) => {
+                const levels = levelService.getLevels();
+                levels.forEach((_level, index) => {
                     const col = index % 3;
                     const row = Math.floor(index / 3);
                     const cardX = gridStartX + col * (cardWidth + cardSpacing);
@@ -725,7 +734,8 @@ export class Game {
             }
 
             // Next Level button (if not last level)
-            if (this.currentLevelIndex < LEVELS.length - 1) {
+            const levels = levelService.getLevels();
+            if (this.currentLevelIndex < levels.length - 1) {
                 const nextX = 300;
                 const nextY = startY + buttonHeight + buttonSpacing;
                 if (x >= nextX && x <= nextX + buttonWidth &&
@@ -738,7 +748,7 @@ export class Game {
 
             // Main Menu button
             const menuX = 300;
-            const menuY = this.currentLevelIndex < LEVELS.length - 1
+            const menuY = this.currentLevelIndex < levels.length - 1
                 ? startY + 2 * (buttonHeight + buttonSpacing)
                 : startY + buttonHeight + buttonSpacing;
             if (x >= menuX && x <= menuX + buttonWidth &&

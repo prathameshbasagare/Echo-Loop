@@ -26,36 +26,38 @@ export class LevelBuilder {
         this.container.innerHTML = `
             <div class="editor-layout">
                 <div class="sidebar">
-                    <div class="tool-section">
-                        <h4>Level Properties</h4>
-                        <div class="form-group">
-                            <label>Name</label>
-                            <input type="text" id="level-name" value="${this.level.name}">
+                    <div class="sidebar-content">
+                        <div class="tool-section">
+                            <h4>Level Properties</h4>
+                            <div class="form-group">
+                                <label>Name</label>
+                                <input type="text" id="level-name" value="${this.level.name}">
+                            </div>
+                            <div class="form-group">
+                                <label>Max Loops</label>
+                                <input type="number" id="level-loops" value="${this.level.maxLoops}">
+                            </div>
+                            <button id="add-loop-spawn-btn" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">Add Loop Spawn</button>
                         </div>
-                        <div class="form-group">
-                            <label>Max Loops</label>
-                            <input type="number" id="level-loops" value="${this.level.maxLoops}">
+                        
+                        <div class="tool-section">
+                            <h4>Components</h4>
+                            <div class="component-list">
+                                <div class="draggable-item" draggable="true" data-type="wall">Wall</div>
+                                <div class="draggable-item" draggable="true" data-type="button">Button & Door</div>
+                                <!-- Door is now added automatically with Button -->
+                                <div class="draggable-item" draggable="true" data-type="goal">Goal</div>
+                                <!-- Initial Spawn removed, use Add Loop Spawn -->
+                            </div>
                         </div>
-                        <button id="add-loop-spawn-btn" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">Add Loop Spawn</button>
-                    </div>
-                    
-                    <div class="tool-section">
-                        <h4>Components</h4>
-                        <div class="component-list">
-                            <div class="draggable-item" draggable="true" data-type="wall">Wall</div>
-                            <div class="draggable-item" draggable="true" data-type="button">Button & Door</div>
-                            <!-- Door is now added automatically with Button -->
-                            <div class="draggable-item" draggable="true" data-type="goal">Goal</div>
-                            <!-- Initial Spawn removed, use Add Loop Spawn -->
+
+                        <div class="tool-section properties-panel" id="properties-panel">
+                            <h4>Selected Item</h4>
+                            <p>Select an item to edit properties</p>
                         </div>
                     </div>
 
-                    <div class="tool-section properties-panel" id="properties-panel">
-                        <h4>Selected Item</h4>
-                        <p>Select an item to edit properties</p>
-                    </div>
-
-                    <div style="margin-top: auto; display: flex; gap: 0.5rem;">
+                    <div class="sidebar-footer">
                         <button id="save-level-btn" class="btn btn-primary" style="flex: 1;">Save</button>
                         <button id="back-btn" class="btn btn-danger" style="flex: 1;">Back</button>
                     </div>
